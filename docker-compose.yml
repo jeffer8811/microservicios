@@ -1,0 +1,38 @@
+version: '3.9'
+
+services:
+  academico:
+    build: ./academico
+    container_name: academico
+    ports:
+      - "8081:8080"
+    networks:
+      - app-net
+
+  matricula:
+    build: ./matricula
+    container_name: matricula
+    ports:
+      - "8082:8080"
+    networks:
+      - app-net
+
+  reporte:
+    build: ./reporte
+    container_name: reporte
+    ports:
+      - "8083:8080"
+    networks:
+      - app-net
+
+  usuario:
+    build: ./usuario
+    container_name: usuario
+    ports:
+      - "8084:8080"
+    networks:
+      - app-net
+
+networks:
+  app-net:
+    driver: bridge

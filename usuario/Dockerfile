@@ -1,4 +1,20 @@
-FROM openjdk:17-jdk-slim
+# Dockerfile para usuario o matricula
+FROM maven:3.9.3-eclipse-temurin-17 AS build
+
 WORKDIR /app
-COPY target/usuario-0.0.1-SNAPSHOT.jar app.jar
-ENTRYPOINT ["java","-jar","app.jar"]
+
+# Copia archivos
+COPY pom.xml .
+COPY src ./src
+
+# Construye el proyecto
+RUN mvn clean package -DskipTests
+
+# Imagen final
+FROM eclipse-temurin:17-jdk-alpine
+
+WORKDIR /app
+
+COPY --from=build /app/target/*.jar app.jar
+
+CMD ["java", "-jar", "app.jar"]

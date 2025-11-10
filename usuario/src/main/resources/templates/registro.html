@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Registro de Usuario</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f2f2f2;
+            /* color de fondo suave */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            background-color: #fff;
+            padding: 30px 40px;
+            border-radius: 12px;
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+            width: 350px;
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus {
+            border-color: #4caf50;
+            outline: none;
+        }
+
+        button.submit-btn {
+            width: 100%;
+            padding: 12px;
+            background-color: #4caf50;
+            color: #fff;
+            font-weight: bold;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        button.submit-btn:hover {
+            background-color: #45a049;
+            transform: scale(1.02);
+        }
+
+        .nav-buttons {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 20px;
+        }
+
+        .nav-buttons button {
+            margin-left: 10px;
+            padding: 6px 14px;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+
+        .nav-buttons button#loginBtn {
+            background-color: #e0e0e0;
+            color: #333;
+        }
+
+        .nav-buttons button#loginBtn:hover {
+            background-color: #d5d5d5;
+        }
+
+        .nav-buttons button#registerBtn {
+            background-color: #4caf50;
+            color: #fff;
+        }
+
+        .nav-buttons button#registerBtn:hover {
+            background-color: #45a049;
+        }
+
+        .nav-buttons button#matriculaBtn {
+            background-color: #2196f3;
+            color: #fff;
+        }
+
+        .nav-buttons button#matriculaBtn:hover {
+            background-color: #1976d2;
+        }
+
+        #mensaje {
+            text-align: center;
+            margin-top: 10px;
+            font-weight: bold;
+            color: #f44336;
+            /* rojo por defecto */
+            opacity: 0;
+            transition: opacity 0.5s;
+        }
+
+        #mensaje.success {
+            color: #4caf50;
+            opacity: 1;
+        }
+
+        #mensaje.error {
+            color: #f44336;
+            opacity: 1;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="nav-buttons">
+            <button id="loginBtn">Inicio Sesión</button>
+            <button id="registerBtn">Registro</button>
+            <button id="matriculaBtn" class="btn btn-primary">Gestión Matrículas</button>
+
+        </div>
+
+        <h2>Registro de Usuario</h2>
+        <form id="formRegistro">
+            <label for="nombre">Nombre:</label>
+            <input type="text" id="nombre" name="nombre" placeholder="Tu nombre" required>
+
+            <label for="email">Correo electrónico:</label>
+            <input type="email" id="email" name="email" placeholder="correo@ejemplo.com" required>
+
+            <button type="submit" class="submit-btn">Registrarse</button>
+
+            <p id="mensaje"></p>
+        </form>
+    </div>
+
+    <script>
+        // Botones de navegación
+        document.getElementById('loginBtn').addEventListener('click', () => {
+            alert('Redirigiendo a Inicio de Sesión...');
+        });
+        document.getElementById('registerBtn').addEventListener('click', () => {
+            alert('Ya estás en Registro');
+        });
+        document.getElementById('matriculaBtn').addEventListener('click', () => {
+            // Redirige al microservicio de matrículas
+            window.location.href = 'http://localhost:8082/matriculas';
+        });
+
+        const form = document.getElementById('formRegistro');
+        const mensaje = document.getElementById('mensaje');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const usuario = {
+                nombre: document.getElementById('nombre').value,
+                email: document.getElementById('email').value
+            };
+
+            try {
+                const response = await fetch('http://localhost:8084/api/usuarios', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(usuario)
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    mensaje.innerText = `¡Tu número de Usuario es: ${data.id}!`;
+                    mensaje.className = 'success';
+                    form.reset();
+                } else {
+                    mensaje.innerText = 'Error al registrar usuario';
+                    mensaje.className = 'error';
+                }
+            } catch (error) {
+                console.error(error);
+                mensaje.innerText = 'Error en la conexión con el servidor';
+                mensaje.className = 'error';
+            }
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Gestión de Matrículas</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+
+<div class="container my-5">
+  <h1 class="text-center mb-4">📘 Gestión de Matrículas</h1>
+
+  <div id="alertContainer"></div>
+
+  <div class="card p-4 mb-4 shadow-sm">
+    <form id="matriculaForm">
+      <div class="mb-3">
+        <label for="usuarioId" class="form-label">Ingrese su usuario:</label>
+        <input type="text" class="form-control" id="usuarioId" required>
+      </div>
+
+      <div class="mb-3">
+        <label for="curso" class="form-label">Curso:</label>
+        <select class="form-select" id="curso" required>
+          <option value="" disabled selected>Seleccione un curso</option>
+          <option value="Matemáticas">Matemáticas</option>
+          <option value="Física">Física</option>
+          <option value="Química">Química</option>
+          <option value="Programación">Programación</option>
+        </select>
+      </div>
+
+      <button type="submit" class="btn btn-primary w-100">Registrar Matrícula</button>
+    </form>
+  </div>
+
+  <h2 class="text-center mb-3">📋 Lista de tus Cursos</h2>
+  <table class="table table-striped table-hover bg-white shadow-sm">
+    <thead class="table-primary">
+      <tr>
+        <th>ID</th>
+        <th>Usuario</th>
+        <th>Curso</th>
+        <th>Días Restantes</th>
+        <th>Acción</th>
+      </tr>
+    </thead>
+    <tbody id="tablaMatriculas"></tbody>
+  </table>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+const form = document.getElementById('matriculaForm');
+const alertContainer = document.getElementById('alertContainer');
+
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const usuarioId = document.getElementById('usuarioId').value;
+  const curso = document.getElementById('curso').value;
+
+  // Fecha automática de registro
+  const fecha = new Date().toISOString().split('T')[0];
+
+  const data = { usuarioId, curso, fecha };
+
+  try {
+    const response = await fetch("/api/matriculas", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data)
+    });
+
+    const result = await response.json();
+    mostrarAlerta(result.mensaje, 'success');
+    form.reset();
+    listarMatriculas();
+  } catch (error) {
+    mostrarAlerta("Error al conectar con el servidor", 'danger');
+    console.error(error);
+  }
+});
+
+function mostrarAlerta(mensaje, tipo) {
+  const alerta = document.createElement('div');
+  alerta.className = `alert alert-${tipo} alert-dismissible fade show`;
+  alerta.role = 'alert';
+  alerta.innerHTML = `
+    ${mensaje}
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+  `;
+  alertContainer.appendChild(alerta);
+
+  setTimeout(() => alerta.remove(), 4000);
+}
+
+async function listarMatriculas() {
+  try {
+    const response = await fetch("/api/matriculas");
+    const matriculas = await response.json();
+
+    const tbody = document.getElementById('tablaMatriculas');
+    tbody.innerHTML = "";
+
+    matriculas.forEach(m => {
+      const fila = document.createElement('tr');
+
+      // Calcular días restantes
+      const fechaRegistro = new Date(m.fecha);
+      const hoy = new Date();
+      const diffTime = fechaRegistro.getTime() + 5*24*60*60*1000 - hoy.getTime(); // 5 días en ms
+      let diasRestantes = Math.ceil(diffTime / (1000*60*60*24));
+      let badgeClass = 'bg-warning text-dark'; // default amarillo
+
+      if (diasRestantes <= 2 && diasRestantes > 0) badgeClass = 'bg-orange text-dark';
+      if (diasRestantes <= 0) {
+        diasRestantes = 0;
+        badgeClass = 'bg-danger';
+      }
+
+      fila.innerHTML = `
+        <td>${m.id}</td>
+        <td>${m.usuarioId}</td>
+        <td>${m.curso}</td>
+        <td><span class="badge ${badgeClass}">${diasRestantes} días</span></td>
+        <td><button class="btn btn-success btn-sm pagar-btn">Pagar Curso</button></td>
+      `;
+
+      fila.querySelector('.pagar-btn').addEventListener('click', () => {
+        mostrarAlerta(`El curso ${m.curso} de ${m.usuarioId} ha sido pagado ✅`, 'success');
+      });
+
+      tbody.appendChild(fila);
+    });
+  } catch (error) {
+    console.error("Error al listar matrículas:", error);
+  }
+}
+
+// Agregar color naranja
+const style = document.createElement('style');
+style.innerHTML = `
+  .bg-orange { background-color: orange !important; }
+`;
+document.head.appendChild(style);
+
+window.onload = listarMatriculas;
+</script>
+</body>
+</html>
